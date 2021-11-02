@@ -15,4 +15,4 @@ echo "Deleting lambda deployment package..."
 rm lambda-deployment-package.zip
 
 echo "Invoking function to test..."
-aws lambda invoke --function-name convert_phone-number_to_vanity-phone-number out --payload '18002354383' --log-type Tail --region us-east-2 --profile personal
+aws lambda invoke --function-name convert_phone-number_to_vanity-phone-number out --payload '18002222222' --log-type Tail --region us-east-2 --profile personal
