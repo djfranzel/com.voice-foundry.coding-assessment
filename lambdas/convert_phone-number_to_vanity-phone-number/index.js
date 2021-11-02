@@ -165,14 +165,14 @@ function getPossibleWordsFromNumberSet(numberSet) {
         // split the word being checked into an iterable array
         let splitWord = word.split('');
 
-        // set the matches variable to true, and switch to false if the word fails a condition
-        let matches = true;
-
         // there must be numbers to iterate, and the word can be a maximum of 2 chars longer than available numbers
         // this allows 1 (800) CALL-BILL to be valid - phones will disregard last 'L'
         const notTooLarge = numberSet.length > 0 && splitWord.length < numberSet.length + 2;
 
         if (notTooLarge) {
+
+            // set the matches variable to true, and switch to false if the word fails a condition
+            let matches = true;
 
             // loop through either the length of the word or the number set, whichever is less
             // this enables words to return that complete just part of the number sequence

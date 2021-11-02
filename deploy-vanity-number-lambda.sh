@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 echo "Running 'npm install' on lambda function..."
 cd lambdas/cloud-foundry_coding-assessment_vanity-numbers || exit 1
