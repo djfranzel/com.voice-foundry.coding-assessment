@@ -15,23 +15,19 @@ const letterMap = {
     '9': ['w', 'x', 'y', 'z'],
 };
 
-// todo: better guards/validation for bad data coming in
 exports.handler = async (event) => {
 
-    console.log('Logging number, hopefully!')
-    console.log(event);
-
     // extract the number from the payload
-    let payload = event.toString();
+    let payload = event['Details']['ContactData']['CustomerEndpoint']['Address'];
 
     // normalize number by removing all non-number chars
-    // todo: this allows a lot of junk, so perhaps require tighter formats
     let normalizedNumber = payload.toString().replace(/\D/g, '');
 
     if (normalizedNumber.length !== 11) {
+        console.error(normalizedNumber);
         return {
-            statusCode: 500,
-            body: 'Invalid phone number! Please provide 11-digit phone number.',
+            PreSpeech: '',
+            MainResponse: 'Number not recognized!'
         };
     }
 
@@ -44,8 +40,8 @@ exports.handler = async (event) => {
     // todo: create conditions where can return strings with 0 and/or 1 included
     if (digitsToUse.includes('1') || digitsToUse.includes('0')) {
         return {
-            statusCode: 500,
-            body: `Can not create vanity number when '1' or '0' are included! These numbers have no associated letters.`,
+            PreSpeech: '',
+            MainResponse: `Cannot create vanity number when '1' or '0' are included! These numbers have no associated letters.`
         };
     }
 
@@ -71,14 +67,21 @@ exports.handler = async (event) => {
         });
     } catch (error) {
         return {
-            statusCode: 500,
-            error: error.message
+            PreSpeech: '',
+            MainResponse: 'Error posting data to DynamoDB'
+        }
+    }
+
+    let mainResponse = '';
+    for (let i = 0; i < 3; i++) {
+        if (formattedVanityNumbers[i]) {
+            mainResponse += formattedVanityNumbers[i] + ', ';
         }
     }
 
     return {
-        statusCode: 200,
-        body: formattedVanityNumbers
+        PreSpeech: '',
+        MainResponse: mainResponse
     };
 };
 

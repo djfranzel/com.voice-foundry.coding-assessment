@@ -56,7 +56,7 @@
             vanityNumbers: []
         },
         mounted: function () {
-            axios.get('https://h3yvy4qruc.execute-api.us-east-2.amazonaws.com/default/cloud-foundry_coding-assessment_vanity-numbers')
+            axios.get('https://piziicpu28.execute-api.us-east-1.amazonaws.com/default/view-saved-vanity-numbers')
                 .then(response => {
                     this.vanityNumbers = response.data;
                 })
