@@ -9,27 +9,23 @@
     <title>Voice Foundry | Vanity Numbers</title>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
 </head>
 <body>
 
-<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>-->
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>-->
-<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>-->
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
         integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
 
-
 <div id="main-page" style="margin: 30px 50px;">
 
-    <h1>View Recent Vanity Numbers</h1>
+    <h3>Last 5 Generated Vanity Numbers:</h3>
+    <br>
 
-    <table class="table">
+    <p v-if="loading">Loading...</p>
+    <p v-else-if="errorText && errorText.length">{{errorText}}</p>
+    <table v-else-if="vanityNumbers && vanityNumbers.length" class="table">
         <thead>
         <tr>
             <th scope="col">Generated Date</th>
@@ -40,11 +36,12 @@
         <tbody>
         <tr v-for="item of vanityNumbers">
             <th>{{moment(item._timeStamp).format('MM/DD/YYYY - h:mm:ss a')}}</th>
-            <th>{{item.sourceNumber}}</th>
+            <th>{{formatPhoneNumberIntl(item.sourceNumber)}}</th>
             <th>{{item.vanityNumbers}}</th>
         </tr>
         </tbody>
     </table>
+    <p v-else>Error displaying vanity numbers!</p>
 
 </div>
 
@@ -53,16 +50,37 @@
     new Vue({
         el: "#main-page",
         data: {
-            vanityNumbers: []
+            loading: false,
+            vanityNumbers: [],
+            errorText: '',
         },
         mounted: function () {
-            axios.get('https://piziicpu28.execute-api.us-east-1.amazonaws.com/default/view-saved-vanity-numbers')
+            this.loading = true;
+            axios.get('https://8ujcb8zmak.execute-api.us-east-1.amazonaws.com/default/view-saved-vanity-numbers')
                 .then(response => {
-                    this.vanityNumbers = response.data;
+                    if (response.data && response.data.length) {
+                        this.vanityNumbers = response.data;
+                    } else {
+                        this.errorText = 'No recently generated vanity numbers found!';
+                    }
                 })
-                .catch(error => {
-                    console.log(error);
-                })
+                .catch(error => this.errorText = error.message ? error.message : 'Error retrieving data!')
+                .finally(() => this.loading = false);
+        },
+        methods: {
+            formatPhoneNumberIntl: function (str) {
+
+                // remove any non-number chars
+                let cleaned = str.replace(/\D/g, '');
+
+                // all phone numbers should be in international format
+                // saved from connect request in lambda "event['Details']['ContactData']['CustomerEndpoint']['Address']"
+                let match = cleaned.match(/(\d)(\d{3})(\d{3})(\d{4})$/);
+
+                // if the number matches the required format, return a nicely formatted number
+                // otherwise just return the number that exists in the DB
+                return match ? `+${match[1]} (${match[2]}) ${match[3]} ${match[4]}` : str;
+            }
         }
     });
 
