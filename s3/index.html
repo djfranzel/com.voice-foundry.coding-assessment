@@ -22,6 +22,9 @@
 
     <h3>Last 5 Generated Vanity Numbers:</h3>
     <br>
+    <button @click="getVanityNumbers()" class="btn btn-primary" :disabled="loading">Refresh Data</button>
+    <br>
+    <br>
 
     <p v-if="loading">Loading...</p>
     <p v-else-if="errorText && errorText.length">{{errorText}}</p>
@@ -55,19 +58,22 @@
             errorText: '',
         },
         mounted: function () {
-            this.loading = true;
-            axios.get('https://8ujcb8zmak.execute-api.us-east-1.amazonaws.com/default/view-saved-vanity-numbers')
-                .then(response => {
-                    if (response.data && response.data.length) {
-                        this.vanityNumbers = response.data;
-                    } else {
-                        this.errorText = 'No recently generated vanity numbers found!';
-                    }
-                })
-                .catch(error => this.errorText = error.message ? error.message : 'Error retrieving data!')
-                .finally(() => this.loading = false);
+            this.getVanityNumbers();
         },
         methods: {
+            getVanityNumbers: function () {
+                this.loading = true;
+                axios.get('https://8ujcb8zmak.execute-api.us-east-1.amazonaws.com/default/view-saved-vanity-numbers')
+                    .then(response => {
+                        if (response.data && response.data.length) {
+                            this.vanityNumbers = response.data;
+                        } else {
+                            this.errorText = 'No recently generated vanity numbers found!';
+                        }
+                    })
+                    .catch(error => this.errorText = error.message ? error.message : 'Error retrieving data!')
+                    .finally(() => this.loading = false);
+            },
             formatPhoneNumberIntl: function (str) {
 
                 // remove any non-number chars
