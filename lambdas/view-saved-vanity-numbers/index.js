@@ -11,23 +11,26 @@ exports.handler = async (event) => {
             throw error;
         });
 
+        // sort most recent first and return just top 5
+        // todo: this call could be optimized with a query instead of a scan for better performance
         let items = sortArrayByKey(response.Items, '_timeStamp', -1);
-        let tempArray = [];
+        let mostRecentFive = [];
         for (let i = 0; i < items.length; i++) {
             if (i < 5) {
-                tempArray.push(items[i]);
+                mostRecentFive.push(items[i]);
             } else {
                 break;
             }
         }
 
+        // allow cross-origin since web app is on another domain
         return {
             headers: {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
             statusCode: 200,
-            body: JSON.stringify(tempArray)
+            body: JSON.stringify(mostRecentFive)
         };
     } catch (error) {
         return {
@@ -35,8 +38,8 @@ exports.handler = async (event) => {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            statusCode: error.statusCode,
-            body: error.message
+            statusCode: error.statusCode ? error.statusCode : 500,
+            body: error.message ? error.message : 'Error retrieving data!'
         };
     }
 };

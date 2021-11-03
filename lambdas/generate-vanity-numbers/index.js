@@ -17,17 +17,31 @@ const letterMap = {
 
 exports.handler = async (event) => {
 
-    // extract the number from the payload
-    let payload = event['Details']['ContactData']['CustomerEndpoint']['Address'];
+    let payload;
+
+    if (event['Details'] &&
+        event['Details']['ContactData'] &&
+        event['Details']['ContactData']['CustomerEndpoint'] &&
+        event['Details']['ContactData']['CustomerEndpoint']['Address']) {
+
+        // extract the number from the payload
+        payload = event['Details']['ContactData']['CustomerEndpoint']['Address'];
+    } else {
+        return {
+            PreSpeech: '',
+            MainResponse: 'We could not retrieve your phone number!'
+        };
+    }
 
     // normalize number by removing all non-number chars
     let normalizedNumber = payload.toString().replace(/\D/g, '');
 
+    // todo: does not allow international numbers with code.length > 1
     if (normalizedNumber.length !== 11) {
         console.error(normalizedNumber);
         return {
             PreSpeech: '',
-            MainResponse: 'Number not recognized!'
+            MainResponse: 'Number format not recognized!'
         };
     }
 
@@ -72,6 +86,8 @@ exports.handler = async (event) => {
         }
     }
 
+    // format the vanity number response so computer speaker can speak it intelligibly
+    // todo: format this better for speaker
     let mainResponse = '';
     for (let i = 0; i < 3; i++) {
         if (formattedVanityNumbers[i]) {
@@ -85,7 +101,8 @@ exports.handler = async (event) => {
     };
 };
 
-// todo: there is probably a way to do this using recursion, but this works fine because our max char count is 7, and so anything more than 3 words is cumbersome
+// it may be best to limit it to three words as 1 (800) AH-HA-NO-IT is odd and less memorable being four words
+// todo: it should be possible to do this using recursion
 function getValidWordCombinations(digitsToUse) {
 
     // split into an array for easy iterating
@@ -137,13 +154,15 @@ function getValidWordCombinations(digitsToUse) {
 
 function getFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
 
-    // format the prefix to `1 (800) `
+    // format the prefix to `X (XXX) `
     let formattedPrefix = `${digitsPrefix.substring(0, 1)} (${digitsPrefix.substring(1, 4)}) `;
 
     // iterate all valid word combinations and add '-' and capitalize for formatting
     let tempArray = [];
     for (let number of validWordCombinations) {
-        tempArray.push(`${formattedPrefix}${number.replace(/ /g, '-').toUpperCase()}`);
+        if (number) {
+            tempArray.push(`${formattedPrefix}${number.replace(/ /g, '-').toUpperCase()}`);
+        }
     }
     return tempArray;
 }
