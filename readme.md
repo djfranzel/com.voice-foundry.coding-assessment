@@ -1,3 +1,3 @@
-Run this command to invoke the function and test the results:
+## Dashboard displaying most recent 5 calls:
 
-`aws lambda invoke --function-name convert_phone-number_to_vanity-phone-number out --payload '{"beer": "tasty"}' --log-type Tail --region us-east-2 --profile personal`
+`https://cloud-foundry-coding-assessment-vanity-number-viewer.s3.us-east-2.amazonaws.com/index.html`
