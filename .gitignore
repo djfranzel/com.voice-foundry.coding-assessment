@@ -1,6 +1,6 @@
 .idea/
 out
-lambdas/convert_phone-number_to_vanity-phone-number/node_modules/
-lambdas/cloud-foundry_coding-assessment_vanity-numbers/node_modules/
-lambdas/convert_phone-number_to_vanity-phone-number/lambda-deployment-package.zip
-lambdas/cloud-foundry_coding-assessment_vanity-numbers/lambda-deployment-package.zip
+lambdas/generate-vanity-numbers/node_modules/
+lambdas/view-saved-vanity-numbers/node_modules/
+lambdas/generate-vanity-numbers/lambda-deployment-package.zip
+lambdas/view-saved-vanity-numbers/lambda-deployment-package.zip

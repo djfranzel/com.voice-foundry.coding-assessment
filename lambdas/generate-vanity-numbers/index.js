@@ -18,6 +18,9 @@ const letterMap = {
 // todo: better guards/validation for bad data coming in
 exports.handler = async (event) => {
 
+    console.log('Logging number, hopefully!')
+    console.log(event);
+
     // extract the number from the payload
     let payload = event.toString();
 
