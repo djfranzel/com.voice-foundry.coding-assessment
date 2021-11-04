@@ -36,10 +36,3 @@ exports.handler = async (event) => {
         };
     }
 };
-
-function sortArrayByKey(array, key, order) {
-    return array.sort((a, b) => {
-        if (order === -1) return a[key] < b[key] ? 1 : -1;
-        else return a[key] < b[key] ? -1 : 1;
-    })
-}
