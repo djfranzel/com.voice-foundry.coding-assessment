@@ -5,23 +5,16 @@ const documentClient = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'
 exports.handler = async (event) => {
 
     try {
-        const response = await documentClient.scan({
-            TableName: 'cloud-foundry_coding-assessment_vanity-numbers'
+        const response = await documentClient.query({
+            TableName: 'cloud-foundry_coding-assessment_vanity-numbers',
+            IndexName: 'numberType-_timeStamp-index',
+            KeyConditionExpression: 'numberType = :numberType',
+            ExpressionAttributeValues: {':numberType': 'VANITY_NUMBER'},
+            Limit: 5,
+            ScanIndexForward: false
         }).promise().catch(error => {
             throw error;
         });
-
-        // sort most recent first and return just top 5
-        // todo: this call could be optimized with a query instead of a scan for better performance
-        let items = sortArrayByKey(response.Items, '_timeStamp', -1);
-        let mostRecentFive = [];
-        for (let i = 0; i < items.length; i++) {
-            if (i < 5) {
-                mostRecentFive.push(items[i]);
-            } else {
-                break;
-            }
-        }
 
         // allow cross-origin since web app is on another domain
         return {
@@ -30,7 +23,7 @@ exports.handler = async (event) => {
                 'Access-Control-Allow-Origin': '*'
             },
             statusCode: 200,
-            body: JSON.stringify(mostRecentFive)
+            body: JSON.stringify(response.Items)
         };
     } catch (error) {
         return {

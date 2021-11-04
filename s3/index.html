@@ -40,7 +40,8 @@
         <tr v-for="item of vanityNumbers">
             <th>{{moment(item._timeStamp).format('MM/DD/YYYY - h:mm:ss a')}}</th>
             <th>{{formatPhoneNumberIntl(item.sourceNumber)}}</th>
-            <th>{{item.vanityNumbers}}</th>
+            <th v-if="item.vanityNumbers && item.vanityNumbers.length">{{item.vanityNumbers.toString().replace(/,/g, ', ')}}</th>
+            <th v-else>No vanity numbers found</th>
         </tr>
         </tbody>
     </table>
@@ -85,7 +86,7 @@
 
                 // if the number matches the required format, return a nicely formatted number
                 // otherwise just return the number that exists in the DB
-                return match ? `+${match[1]} (${match[2]}) ${match[3]} ${match[4]}` : str;
+                return match ? `+${match[1]} (${match[2]}) ${match[3]}-${match[4]}` : str;
             }
         }
     });
