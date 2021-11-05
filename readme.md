@@ -56,7 +56,7 @@
 <br>
 
 ##### Architecture diagram:
-<a href="https://view-saved-vanity-numbers.s3.amazonaws.com/architecture-diagram.png">
+<a target="_blank" href="https://view-saved-vanity-numbers.s3.amazonaws.com/architecture-diagram.png">
 https://view-saved-vanity-numbers.s3.amazonaws.com/architecture-diagram.png
 </a>
     
@@ -64,6 +64,6 @@ https://view-saved-vanity-numbers.s3.amazonaws.com/architecture-diagram.png
 `(312) 265-5426`
 
 ##### Dashboard displaying most recent 5 calls:
-<a href="http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html">
+<a target="_blank" href="http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html">
 http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html
 </a>
