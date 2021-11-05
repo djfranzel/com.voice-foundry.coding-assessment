@@ -63,10 +63,11 @@ exports.handler = async (event) => {
 
     // grab all possible vanity numbers
     const validWordCombinations = getValidWordCombinations(digitsToUse);
+    const bestVanityNumbers = getBestVanityNumbers(validWordCombinations);
 
     // post this data to DynamoDB for easy viewing later
     try {
-        await postToDynamoDB(normalizedNumber, digitsPrefix, validWordCombinations);
+        await postToDynamoDB(normalizedNumber, digitsPrefix, bestVanityNumbers);
     } catch (error) {
         console.error(error);
         return {
@@ -79,14 +80,14 @@ exports.handler = async (event) => {
     let mainResponse = '';
 
     // check that words were returned, and generate messages accordingly
-    if (!validWordCombinations || !validWordCombinations.length) {
+    if (!bestVanityNumbers || !bestVanityNumbers.length) {
         mainResponse = 'We were unable to generate any vanity numbers for you phone number.';
     } else {
-        const length = validWordCombinations.length;
-        preSpeech = `${length} vanity number${length > 1 ? 's' : ''} generated: `;
+        const length = bestVanityNumbers.length;
+        preSpeech = `${length <= 3 ? length : 3} vanity number${length > 1 ? 's' : ''} generated: `;
 
         // format the vanity number response so computer speaker can speak it intelligibly
-        mainResponse = getConnectFormattedVanityNumbers(digitsPrefix, validWordCombinations);
+        mainResponse = getConnectFormattedVanityNumbers(digitsPrefix, bestVanityNumbers);
     }
 
     // log response for visibility
@@ -98,7 +99,28 @@ exports.handler = async (event) => {
     };
 };
 
-// console.log('Final result: ' + getValidWordCombinations('0234567'))
+function getBestVanityNumbers(validWordCombinations) {
+
+    let fiveBestVanityNumbers = [];
+
+    // sort the list by number of spaces in string, which should put longer words on top
+
+    // then get a popular word score and return the most popular
+    for (let wordCombo of validWordCombinations) {
+
+        let popularWordScore = 0;
+        for (let word of wordCombo.split(' ')) {
+
+            for (let dictionaryWord of top5000EnglishWords) {
+
+            }
+        }
+    }
+
+    // hopefully these two heuristics will give good results
+    return validWordCombinations;
+}
+// getBestVanityNumbers(getValidWordCombinations('7394968'))
 
 // return only as much as desired for the limit, with priority on longer words first
 function getValidWordCombinations(digitsToUse) {
@@ -118,21 +140,21 @@ function getValidWordCombinations(digitsToUse) {
             previousMatch += ` ${digitsArrayCopy[0]}`;
             digitsArrayCopy.splice(0, 1);
             if (previousMatch.replace(/ /g, '').length >= 7) {
-                validWordCombinations.push(previousMatch);
+                validWordCombinations.push(previousMatch.trim());
             }
             getWords(digitsArrayCopy, previousMatch);
         }
 
-        let wordList = getPossibleWordsFromNumberSet(digitsArray, 1);
+        let wordList = getPossibleWordsFromNumberSet(digitsArray, 2);
 
         for (let i = 0; i < wordList.length; i++) {
 
-            let possibleWord = previousMatch ? `${previousMatch} ${wordList[i]}` : wordList[i];
+            let possibleWord = previousMatch ? ` ${previousMatch} ${wordList[i]}` : ` ${wordList[i]}`;
             let effectiveLength = possibleWord.replace(/ /g, '').length;
 
             // if the is matched, then go with it and keep iterating
             if (effectiveLength >= 7) {
-                validWordCombinations.push(possibleWord);
+                validWordCombinations.push(possibleWord.trim());
             } else if (effectiveLength < 7) {
 
                 // remove however many chars from the digitsArrayCopy that the word is long
