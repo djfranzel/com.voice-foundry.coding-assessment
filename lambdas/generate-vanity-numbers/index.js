@@ -1,8 +1,4 @@
-const AWS = require('aws-sdk');
-AWS.config.update({region: 'us-east-1'});
-const documentClient = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'});
-const uuid = require('uuid');
-
+const postToDynamoDB = require('./services/postToDynamoDB');
 const top5000EnglishWords = require('./top-5000-english-words');
 const letterMap = {
     '2': ['a', 'b', 'c'],
@@ -13,18 +9,6 @@ const letterMap = {
     '7': ['p', 'q', 'r', 's'],
     '8': ['t', 'u', 'v'],
     '9': ['w', 'x', 'y', 'z'],
-};
-const numberMap = {
-    '0': 'zero',
-    '1': 'one',
-    '2': 'two',
-    '3': 'three',
-    '4': 'four',
-    '5': 'five',
-    '6': 'six',
-    '7': 'seven',
-    '8': 'eight',
-    '9': 'nine',
 };
 const numberOrderMap = {
     0: 'first',
@@ -53,7 +37,7 @@ exports.handler = async (event) => {
         };
     } else if (normalizedNumber[0] !== '1') {
 
-        // set error messages, lot them, and return them to the user
+        // set error messages, log them, and return them to the user
         const message = `We currently only support vanity number generation from US-based numbers.`;
         console.error(`${message} Number: ${normalizedNumber}`);
         console.error('Event: ' + event);
@@ -73,34 +57,18 @@ exports.handler = async (event) => {
         };
     }
 
-    // extract digits for prefix, which remains in number format
+    // split up the string into the prefix, which stays in number format, and the digits after, which are converted
     const digitsPrefix = normalizedNumber.substring(0, 4);
-
-    // extract digits to attempt conversion to words
     const digitsToUse = normalizedNumber.substring(4, 11);
 
     // grab all possible vanity numbers
     const validWordCombinations = getValidWordCombinations(digitsToUse);
 
-    // put items into dynamoDB
+    // post this data to DynamoDB for easy viewing later
     try {
-
-        // add a unique uuid for the item, the original number all vanity numbers were generated from, and the array of formatted vanity numbers
-        const item = {
-            id: uuid.v4(),
-            _timeStamp: new Date().toJSON(),
-            numberType: 'VANITY_NUMBER',
-            sourceNumber: normalizedNumber,
-            vanityNumbers: getDynamoDBFormattedVanityNumbers(digitsPrefix, validWordCombinations)
-        };
-        await documentClient.put({
-            TableName: 'cloud-foundry_coding-assessment_vanity-numbers',
-            Item: item,
-        }).promise().catch(error => {
-            throw error;
-        });
+        await postToDynamoDB(normalizedNumber, digitsPrefix, validWordCombinations);
     } catch (error) {
-        console.error('Error posting data to DynamoDB! error: ' + error);
+        console.error(error);
         return {
             PreSpeech: '',
             MainResponse: 'Error generating vanity numbers.'
@@ -112,10 +80,11 @@ exports.handler = async (event) => {
 
     // check that words were returned, and generate messages accordingly
     if (!validWordCombinations || !validWordCombinations.length) {
-        preSpeech = 'We were unable to generate any vanity numbers for you phone number.';
+        mainResponse = 'We were unable to generate any vanity numbers for you phone number.';
     } else {
         const length = validWordCombinations.length;
         preSpeech = `${length} vanity number${length > 1 ? 's' : ''} generated: `;
+
         // format the vanity number response so computer speaker can speak it intelligibly
         mainResponse = getConnectFormattedVanityNumbers(digitsPrefix, validWordCombinations);
     }
@@ -129,7 +98,7 @@ exports.handler = async (event) => {
     };
 };
 
-// console.log('Final result: ' + getValidWordCombinations('7822377'))
+// console.log('Final result: ' + getValidWordCombinations('0234567'))
 
 // return only as much as desired for the limit, with priority on longer words first
 function getValidWordCombinations(digitsToUse) {
@@ -138,7 +107,21 @@ function getValidWordCombinations(digitsToUse) {
     const digitsArray = digitsToUse.split('');
     let validWordCombinations = [];
 
-    function get(digitsArray, previousMatch) {
+    function getWords(digitsArray, previousMatch) {
+
+        // create a copy since we are checking each word and recursively looping through all data
+        // failing to create a copy would mutate the original, causing future matches to be missed
+        let digitsArrayCopy = JSON.parse(JSON.stringify(digitsArray));
+
+        // check for '1' or '0' as the first char of the array,
+        if (digitsArrayCopy[0] === '1' || digitsArrayCopy[0] === '0') {
+            previousMatch += ` ${digitsArrayCopy[0]}`;
+            digitsArrayCopy.splice(0, 1);
+            if (previousMatch.replace(/ /g, '').length >= 7) {
+                validWordCombinations.push(previousMatch);
+            }
+            getWords(digitsArrayCopy, previousMatch);
+        }
 
         let wordList = getPossibleWordsFromNumberSet(digitsArray, 1);
 
@@ -147,27 +130,27 @@ function getValidWordCombinations(digitsToUse) {
             let possibleWord = previousMatch ? `${previousMatch} ${wordList[i]}` : wordList[i];
             let effectiveLength = possibleWord.replace(/ /g, '').length;
 
+            // if the is matched, then go with it and keep iterating
             if (effectiveLength >= 7) {
                 validWordCombinations.push(possibleWord);
             } else if (effectiveLength < 7) {
 
-                // create a copy since we are checking each word and recursively looping through all data
-                // failing to create a copy would mutate the original, causing future matches to be missed
+                // remove however many chars from the digitsArrayCopy that the word is long
                 let digitsArrayCopy = JSON.parse(JSON.stringify(digitsArray));
                 digitsArrayCopy.splice(0, wordList[i].length);
 
-                get(digitsArrayCopy, possibleWord);
+                getWords(digitsArrayCopy, possibleWord);
             }
         }
     }
 
     // call the function to recursively generate all available vanity numbers
-    get(digitsArray, '');
+    getWords(digitsArray, '');
 
     return validWordCombinations;
 }
 
-function getPossibleWordsFromNumberSet(numberSet, additionalWordLength) {
+function getPossibleWordsFromNumberSet(numberSet, additionalCharLength) {
 
     // set an empty word set array to populate with possible word combinations
     let wordSet = [];
@@ -180,7 +163,7 @@ function getPossibleWordsFromNumberSet(numberSet, additionalWordLength) {
 
         // there must be numbers to iterate, and the word cannot be longer than the numberSet plus any additional word length
         // this allows 1 (800) CALL-BILL to be valid - phones will disregard last 'L'
-        const notTooLarge = numberSet.length > 0 && splitWord.length <= numberSet.length + additionalWordLength;
+        const notTooLarge = numberSet.length > 0 && splitWord.length <= numberSet.length + additionalCharLength;
 
         if (notTooLarge) {
 
@@ -210,28 +193,13 @@ function getPossibleWordsFromNumberSet(numberSet, additionalWordLength) {
     return wordSet;
 }
 
-function getDynamoDBFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
-
-    // format the prefix to `X (XXX) `
-    let formattedPrefix = `${digitsPrefix.substring(0, 1)} (${digitsPrefix.substring(1, 4)}) `;
-
-    // iterate all valid word combinations and add '-' and capitalize for formatting
-    let tempArray = [];
-    for (let i = 0; i < validWordCombinations.length; i++) {
-        if (validWordCombinations[i] && i < 5) {
-            tempArray.push(`${formattedPrefix}${validWordCombinations[i].replace(/ /g, '-').toUpperCase()}`);
-        }
-    }
-    return tempArray;
-}
-
 function getConnectFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
 
     // format the prefix with separated numbers so voice will speak them slower and more clearly
     let formattedDigitsPrefix =
         `${digitsPrefix[0]}, ${digitsPrefix[1]} ${digitsPrefix[2]} ${digitsPrefix[3]},`;
 
-    // iterate over all validWordCombinations to the limit but not more than 3
+    // iterate over all validWordCombinations to the limit of 3
     let finalFormattedString = '';
     for (let i = 0; i < validWordCombinations.length; i++) {
         if (validWordCombinations[i] && i < 3) {
