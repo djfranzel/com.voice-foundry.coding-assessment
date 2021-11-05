@@ -81,7 +81,7 @@ exports.handler = async (event) => {
 
     // check that words were returned, and generate messages accordingly
     if (!bestVanityNumbers || !bestVanityNumbers.length) {
-        mainResponse = 'We were unable to generate any vanity numbers for you phone number.';
+        mainResponse = 'We were unable to generate any vanity numbers from your phone number.';
     } else {
         const length = bestVanityNumbers.length;
         preSpeech = `We were able to generate ${length <= 3 ? length : 3} vanity number${length > 1 ? 's' : ''} for your phone number: `;
