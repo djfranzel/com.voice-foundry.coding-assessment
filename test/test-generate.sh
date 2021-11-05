@@ -21,3 +21,4 @@ aws lambda invoke --function-name generate-vanity-numbers --payload '{"Details":
 ## test successful case
 aws lambda invoke --function-name generate-vanity-numbers --payload '{"Details":{"ContactData":{"CustomerEndpoint":{"Address":"+16124333552"}}}}' --region us-east-1 --profile personal response.json
 aws lambda invoke --function-name generate-vanity-numbers --payload '{"Details":{"ContactData":{"CustomerEndpoint":{"Address":"+16127394968"}}}}' --region us-east-1 --profile personal response.json
+aws lambda invoke --function-name generate-vanity-numbers --payload '{"Details":{"ContactData":{"CustomerEndpoint":{"Address":"+16122222222"}}}}' --region us-east-1 --profile personal response.json

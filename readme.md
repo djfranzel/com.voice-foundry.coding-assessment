@@ -1,11 +1,4 @@
-##### Dashboard displaying most recent 5 calls:
-`http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html`
-
-##### Number to call to generate vanity numbers from the phone you are calling from:
-`(312) 265-5426`
-
-##### Architecture diagram:
-`s3 link`
+# Cloud Foundry - Senior Developer Coding Assessment
 
 #### Writing and Documentation:
 
@@ -36,7 +29,8 @@
 
     On the vanity number generation, we could also include cases for '2' and '4' since they correlate to 'to' and 'for', 
     which would create more possibilities. We could also only generate vanity numbers for the last four digits if 
-    nothing better could be found. Adding these two would create a more comprehensive solution. 
+    nothing better could be found. Adding these two would create a more comprehensive solution. The top 5000 english word list
+    was good, but we could consider other word sources, potentially expanding, and potentially removing more 'sensitive' words.
     We could also test this more broadly, review with the client to create improvements, such as saving all 
     vanity numbers in a DB and having those available for a human to parse them. Some of the code could be refactored further,
     but I had a lot of fun with it, so it is fairly condensed given what it is doing. I'm sure that a client would have suggestions 
@@ -58,6 +52,18 @@
     The top 5 results were saved into a DynamoDB table that was implemented with an index to get sorted results of most 
     recent 5 results for the web-app. The web-app was a simple S3 static website with Bootstrap, axios, moment, and vue.js to 
     create a simple table (link above). Data was retrieved through exposing a lambda function that queried DynamoDB through API Gateway. 
+   
+<br>
+
+##### Architecture diagram:
+<a href="https://view-saved-vanity-numbers.s3.amazonaws.com/architecture-diagram.png">
+https://view-saved-vanity-numbers.s3.amazonaws.com/architecture-diagram.png
+</a>
     
-    ^Link near top of page
-    
+##### Amazon Connect number:
+`(312) 265-5426`
+
+##### Dashboard displaying most recent 5 calls:
+<a href="http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html">
+http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html
+</a>
