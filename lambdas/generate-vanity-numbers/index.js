@@ -80,7 +80,7 @@ exports.handler = async (event) => {
     const digitsToUse = normalizedNumber.substring(4, 11);
 
     // grab all possible vanity numbers
-    const wordCombinations = getWordCombinations(digitsToUse.split(''));
+    const validWordCombinations = getValidWordCombinations(digitsToUse);
 
     // put items into dynamoDB
     try {
@@ -129,365 +129,42 @@ exports.handler = async (event) => {
     };
 };
 
-// console.log(getWordCombinations('7822377'.split(''), ''))
-
-function getWordCombinations(digitsToUse, wordString) {
-
-    console.log(digitsToUse);
-    console.log(wordString);
-
-    // todo: include conditions for 1/0!
-    // todo: this will only get the first combination that is valid, must get all!
-
-    // iterate through 5000 most common english words
-    for (let i = 0; i < top5000EnglishWords.length; i++) {
-
-        // there must be numbers to iterate, and the word cannot be longer than the numberSet plus any additional word length
-        // this allows 1 (800) CALL-BILL to be valid - phones will disregard last 'L'
-        const wordNotTooLong = digitsToUse.length > 0 && top5000EnglishWords[i].length <= digitsToUse.length + 2;
-
-        if (wordNotTooLong) {
-
-            // console.log(top5000EnglishWords[i])
-
-            // set the matches variable to true, and switch to false if the word fails a character
-            let matches = true;
-
-            // loop through either the length of the word or the number set, whichever is less
-            // this enables words to return that complete just part of the number sequence
-            const loopLength = Math.min(top5000EnglishWords[i].length, digitsToUse.length);
-
-            // console.log(loopLength)
-
-            // check each char of the word and the digit string for a match
-            for (let j = 0; j < loopLength; j++) {
-
-                // if the letterMap doesn't have the number or if the char from the split word doesn't exist for the number
-                // set matches to false and break loop for efficiency
-                if (!letterMap[digitsToUse[j]] || !letterMap[digitsToUse[j]].includes(top5000EnglishWords[i][j])) {
-                    matches = false;
-                    break;
-                } else if (digitsToUse[j] === '1' || digitsToUse[j] === '0') {
-                    console.log('1 or 0')
-                    // something here that is a conditional on 1/0 and will loop again
-                    break;
-                }
-            }
-
-            // there is a word match
-            if (matches) {
-
-                // there has to be more looping here!
-                //
-
-                console.log(top5000EnglishWords[i]);
-                console.log(digitsToUse);
-
-                // remove a digit for every char of the matching word
-                for (let char of top5000EnglishWords[i]) {
-                    digitsToUse.shift();
-                }
-                console.log(digitsToUse);
-
-                if (!digitsToUse.length) {
-                    wordString += top5000EnglishWords[i];
-                    return wordString;
-                } else {
-                    getWordCombinations(digitsToUse, wordString);
-                }
-
-            } else if (i === top5000EnglishWords.length - 1) {
-                return wordString;
-            } else {
-                // continue the word search
-            }
-        }
-    }
-}
-
-// using recursion here!
-function asdf(digitsToUse) {
-
-    // loop through dictionary and make checks to see if a word matches
-    // if there is a matching word, then slice the digits to use and get the next set
-    // if it hits a '1' or '0', then match up until that point
-    // keep going and skip '1' and '0' until there are no chars left!
-
-    // loop through all digits with conditions until none are left!
-    const digitsCopy = JSON.parse(JSON.stringify(digitsToUse));
-
-    // first run the simple scenario where 0/1 are not taken into consideration
-
-
-    // iterate through 5000 most common english words
-    for (let word of top5000EnglishWords) {
-
-        // split the word being checked into an iterable array
-        let splitWord = word.split('');
-
-        // there must be numbers to iterate, and the word cannot be longer than the numberSet plus any additional word length
-        // this allows 1 (800) CALL-BILL to be valid - phones will disregard last 'L'
-        const notTooLarge = digitsCopy.length > 0 && splitWord.length <= digitsCopy.length + additionalWordLength;
-
-        if (notTooLarge) {
-
-            // set the matches variable to true, and switch to false if the word fails a condition
-            let matches = true;
-
-            // loop through either the length of the word or the number set, whichever is less
-            // this enables words to return that complete just part of the number sequence
-            const loopLength = Math.min(splitWord.length, digitsCopy.length);
-
-            for (let i = 0; i < loopLength; i++) {
-
-                // if the letterMap doesn't have the number or if the char from the split word doesn't exist for the number
-                // set matches to false and break loop for efficiency
-                if (!letterMap[digitsCopy[i]] || !letterMap[digitsCopy[i]].includes(splitWord[i])) {
-                    matches = false;
-                    break;
-                }
-            }
-
-            // push the words that match to the set
-            if (matches) {
-                return word;
-            }
-        }
-    }
-
-}
-
-function getZeroOneDigits(digitsToUse) {
-
-    // extract all 0/1's and insert in order into an array to splice in later on returned numbers
-    let zeroOneDigits = [];
-    for (let digit of digitsToUse) {
-        if (digit === '0' || digit === '1') {
-            zeroOneDigits.push(digit);
-        }
-    }
-    return zeroOneDigits;
-}
-
-// only allow up to two total 0/1's in number since more than that returns a vanity number that is ugly and not meaningful
-function getWordCombinations01Case(digitsToUse, limit) {
-
-    // extract all 0/1's and insert in order into an array to splice in later on returned numbers
-    let zeroOneDigits = [];
-    for (let digit of digitsToUse) {
-        if (digit === '0' || digit === '1') {
-            zeroOneDigits.push(digit)
-        }
-    }
-
-    // if there are simply too many 0/1's to create a meaningful vanity number, just return an empty array
-    if (zeroOneDigits.length > 2) {
-        // todo: how to include a message here so the user knows number is rejected?
-        return [];
-    }
-
-    // set a limit on the count since presence of 0/1's reduce the possible word length
-    const wordLengthLimit = 7 - zeroOneDigits.length;
-
-    // creates an array that is fully split on 0's and 1's '2216079' -> ['22', '6', '79']
-    let splitOnOne = digitsToUse.split('1');
-    let fullySplit = [];
-    for (let digitSet of splitOnOne) {
-        fullySplit = fullySplit.concat(digitSet.split('0'));
-    }
-
-    // grab the number sets from the split array and generate words from those numbers
-    let firstWordList = fullySplit[0] ? getPossibleWordsFromNumberSet(fullySplit[0], 0) : [];
-    let secondWordList = fullySplit[1] ? getPossibleWordsFromNumberSet(fullySplit[1], 0) : [];
-    let thirdWordList = fullySplit[2] ? getPossibleWordsFromNumberSet(fullySplit[2], 0) : [];
-    console.log(fullySplit)
-    console.log(firstWordList)
-    console.log(secondWordList)
-    console.log(thirdWordList)
-
-    // get the array of words for the first possible combination
-    let validWordCombinations = [];
-
-    // iterate over this first word list to start creating valid vanity numbers
-    for (let firstWord of firstWordList) {
-
-        // if the first word is enough, push it into the array and move on
-        if (firstWord.length === wordLengthLimit) {
-            validWordCombinations.push(firstWord + ' ' + zeroOneDigits[0]);
-            if (validWordCombinations.length >= limit) {
-                return validWordCombinations;
-            }
-            continue;
-        }
-
-        for (let secondWord of secondWordList) {
-
-            // if the combination of the first and second words are enough, push and move on
-            if (firstWord.length + secondWord.length === wordLengthLimit) {
-                validWordCombinations.push(firstWord + ' ' + zeroOneDigits[0] + ' ' + secondWord);
-                if (validWordCombinations.length >= limit) {
-                    return validWordCombinations;
-                }
-                continue;
-            }
-
-            for (let thirdWord of thirdWordList) {
-                if (firstWord.length + secondWord.length + thirdWord.length === wordLengthLimit) {
-                    validWordCombinations.push(firstWord + ' ' + zeroOneDigits[0] + ' ' + secondWord + ' ' + zeroOneDigits[1] + ' ' + thirdWord);
-                    if (validWordCombinations.length >= limit) {
-                        return validWordCombinations;
-                    }
-                }
-            }
-        }
-    }
-    return validWordCombinations;
-}
-
-
-console.log('Final result: ' + getValidWordCombinations('8438432'))
+// console.log('Final result: ' + getValidWordCombinations('7822377'))
 
 // return only as much as desired for the limit, with priority on longer words first
 function getValidWordCombinations(digitsToUse) {
 
     // split into an array for easy iterating
     const digitsArray = digitsToUse.split('');
-
     let validWordCombinations = [];
 
     function get(digitsArray, previousMatch) {
 
-        let wordList = getPossibleWordsFromNumberSet(digitsArray, 0);
-        // console.log(wordList)
+        let wordList = getPossibleWordsFromNumberSet(digitsArray, 1);
 
         for (let i = 0; i < wordList.length; i++) {
 
             let possibleWord = previousMatch ? `${previousMatch} ${wordList[i]}` : wordList[i];
             let effectiveLength = possibleWord.replace(/ /g, '').length;
 
-            if (effectiveLength === 7) {
+            if (effectiveLength >= 7) {
                 validWordCombinations.push(possibleWord);
             } else if (effectiveLength < 7) {
 
-                // create a copy because this is recursively iterating over remaining options...
+                // create a copy since we are checking each word and recursively looping through all data
+                // failing to create a copy would mutate the original, causing future matches to be missed
                 let digitsArrayCopy = JSON.parse(JSON.stringify(digitsArray));
-                for (let char of wordList[i]) {
-                    digitsArrayCopy.shift();
-                }
+                digitsArrayCopy.splice(0, wordList[i].length);
 
                 get(digitsArrayCopy, possibleWord);
             }
         }
     }
 
-    get(digitsArray, '')
+    // call the function to recursively generate all available vanity numbers
+    get(digitsArray, '');
 
     return validWordCombinations;
-
-    // let possibleWord = '';
-    //
-    // // iterate over this first word list to start creating valid vanity numbers
-    // for (let firstWord of firstWordList) {
-    //
-    //     possibleWord = firstWord;
-    //
-    //     // if the first word is enough, push it into the array and move on
-    //     if (possibleWord.replace(/ /g, '').length >= 7) {
-    //         validWordCombinations.push(possibleWord);
-    //         if (validWordCombinations.length >= limit) {
-    //             return validWordCombinations;
-    //         }
-    //         continue;
-    //     }
-    //
-    //     // get second set of digits
-    //     let secondNewDigits = getNewDigits(firstWord, digitsArray);
-    //
-    //     // get the second word list that correspond to the digit set
-    //     let secondWordList = getPossibleWordsFromNumberSet(secondNewDigits, 2);
-    //
-    //     for (let secondWord of secondWordList) {
-    //
-    //         possibleWord = possibleWord + ' ' + secondWord;
-    //
-    //         // if the combination of the first and second words are enough, push and move on
-    //         if (possibleWord.replace(/ /g, '').length >= 7) {
-    //             validWordCombinations.push(possibleWord);
-    //             if (validWordCombinations.length >= limit) {
-    //                 return validWordCombinations;
-    //             }
-    //             continue;
-    //         }
-    //
-    //         // get third digit set from the second digit set
-    //         let thirdNewDigits = getNewDigits(secondWord, secondNewDigits);
-    //
-    //         // grab the third set of words from corresponding number set
-    //         let thirdWordList = getPossibleWordsFromNumberSet(thirdNewDigits, 2);
-    //
-    //         for (let thirdWord of thirdWordList) {
-    //
-    //             possibleWord = possibleWord + ' ' + thirdWord;
-    //
-    //             if (possibleWord.replace(/ /g, '').length >= 7) {
-    //                 validWordCombinations.push(possibleWord);
-    //                 if (validWordCombinations.length >= limit) {
-    //                     return validWordCombinations;
-    //                 }
-    //                 continue;
-    //             }
-    //         }
-    //     }
-    // }
-    // return validWordCombinations;
-}
-
-function getDynamoDBFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
-
-    // format the prefix to `X (XXX) `
-    let formattedPrefix = `${digitsPrefix.substring(0, 1)} (${digitsPrefix.substring(1, 4)}) `;
-
-    // iterate all valid word combinations and add '-' and capitalize for formatting
-    let tempArray = [];
-    for (let i = 0; i < validWordCombinations.length; i++) {
-        if (validWordCombinations[i] && i < 5) {
-            tempArray.push(`${formattedPrefix}${validWordCombinations[i].replace(/ /g, '-').toUpperCase()}`);
-        }
-    }
-    return tempArray;
-}
-
-function getConnectFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
-
-    // format the prefix with separated numbers so voice will speak them slower and more clearly
-    let formattedDigitsPrefix =
-        `${digitsPrefix[0]}, ${digitsPrefix[1]} ${digitsPrefix[2]} ${digitsPrefix[3]},`;
-
-    // iterate over all validWordCombinations to the limit but not more than 3
-    let finalFormattedString = '';
-    for (let i = 0; i < validWordCombinations.length; i++) {
-        if (validWordCombinations[i] && i < 3) {
-
-            // prepend the digits prefix and push to returned array
-            finalFormattedString += `${numberOrderMap[i]} number: ${formattedDigitsPrefix}${validWordCombinations[i]}, `;
-        } else {
-            break;
-        }
-    }
-
-    return finalFormattedString;
-}
-
-function getNewDigits(word, oldDigits) {
-
-    // create a copy of the oldDigits to prevent unwanted object manipulation
-    let digitsArrayCopy = JSON.parse(JSON.stringify(oldDigits));
-
-    // remove one item in the array for each word char since these are now used
-    for (let char of word) {
-        digitsArrayCopy.shift();
-    }
-    return digitsArrayCopy;
 }
 
 function getPossibleWordsFromNumberSet(numberSet, additionalWordLength) {
@@ -531,4 +208,40 @@ function getPossibleWordsFromNumberSet(numberSet, additionalWordLength) {
         }
     }
     return wordSet;
+}
+
+function getDynamoDBFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
+
+    // format the prefix to `X (XXX) `
+    let formattedPrefix = `${digitsPrefix.substring(0, 1)} (${digitsPrefix.substring(1, 4)}) `;
+
+    // iterate all valid word combinations and add '-' and capitalize for formatting
+    let tempArray = [];
+    for (let i = 0; i < validWordCombinations.length; i++) {
+        if (validWordCombinations[i] && i < 5) {
+            tempArray.push(`${formattedPrefix}${validWordCombinations[i].replace(/ /g, '-').toUpperCase()}`);
+        }
+    }
+    return tempArray;
+}
+
+function getConnectFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
+
+    // format the prefix with separated numbers so voice will speak them slower and more clearly
+    let formattedDigitsPrefix =
+        `${digitsPrefix[0]}, ${digitsPrefix[1]} ${digitsPrefix[2]} ${digitsPrefix[3]},`;
+
+    // iterate over all validWordCombinations to the limit but not more than 3
+    let finalFormattedString = '';
+    for (let i = 0; i < validWordCombinations.length; i++) {
+        if (validWordCombinations[i] && i < 3) {
+
+            // prepend the digits prefix and push to returned array
+            finalFormattedString += `${numberOrderMap[i]} number: ${formattedDigitsPrefix}${validWordCombinations[i]}, `;
+        } else {
+            break;
+        }
+    }
+
+    return finalFormattedString;
 }
