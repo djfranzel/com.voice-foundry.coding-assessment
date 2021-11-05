@@ -1,0 +1,55 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Resources" : {
+    "VanityNumbersTable" : {
+      "Type" : "AWS::DynamoDB::Table",
+      "Properties" : {
+        "TableName" : "cloud-foundry_coding-assessment_vanity-numbers",
+        "KeySchema" : [
+          {
+            "AttributeName" : "id",
+            "KeyType" : "HASH"
+          }
+        ],
+        "AttributeDefinitions" : [
+          {
+            "AttributeName" : "id",
+            "AttributeType" : "S"
+          },
+          {
+            "AttributeName" : "numberType",
+            "AttributeType" : "S"
+          },
+          {
+            "AttributeName" : "_timeStamp",
+            "AttributeType" : "S"
+          }
+        ],
+        "ProvisionedThroughput" : {
+          "ReadCapacityUnits" : "5",
+          "WriteCapacityUnits" : "5"
+        },
+        "GlobalSecondaryIndexes" : [{
+          "IndexName" : "numberType-_timeStamp-index",
+          "KeySchema" : [
+            {
+              "AttributeName" : "numberType",
+              "KeyType" : "HASH"
+            },
+            {
+              "AttributeName" : "_timeStamp",
+              "KeyType" : "RANGE"
+            }
+          ],
+          "Projection" : {
+            "ProjectionType" : "ALL"
+          },
+          "ProvisionedThroughput" : {
+            "ReadCapacityUnits" : "5",
+            "WriteCapacityUnits" : "5"
+          }
+        }]
+      }
+    }
+  }
+}
