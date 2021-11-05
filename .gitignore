@@ -4,3 +4,4 @@ lambdas/generate-vanity-numbers/node_modules/
 lambdas/view-saved-vanity-numbers/node_modules/
 lambdas/generate-vanity-numbers/lambda-deployment-package.zip
 lambdas/view-saved-vanity-numbers/lambda-deployment-package.zip
+*response.json

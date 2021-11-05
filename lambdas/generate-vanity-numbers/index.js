@@ -84,7 +84,7 @@ exports.handler = async (event) => {
         mainResponse = 'We were unable to generate any vanity numbers for you phone number.';
     } else {
         const length = bestVanityNumbers.length;
-        preSpeech = `${length <= 3 ? length : 3} vanity number${length > 1 ? 's' : ''} generated: `;
+        preSpeech = `We were able to generate ${length <= 3 ? length : 3} vanity number${length > 1 ? 's' : ''} for your phone number: `;
 
         // format the vanity number response so computer speaker can speak it intelligibly
         mainResponse = getConnectFormattedVanityNumbers(digitsPrefix, bestVanityNumbers);
@@ -99,35 +99,62 @@ exports.handler = async (event) => {
     };
 };
 
+// console.log(getBestVanityNumbers(getValidWordCombinations('3283280')))
+
 function getBestVanityNumbers(validWordCombinations) {
 
+    // initialize the final array to return
     let fiveBestVanityNumbers = [];
 
-    // sort the list by number of spaces in string, which should put longer words on top
+    // this sorts the array with least number of spaces first, correlating to a simpler, and hopefully better vanity numbers
+    let sortedByLeastSpaces = validWordCombinations.sort((a, b) => spaceCount(a) - spaceCount(b));
 
-    // then get a popular word score and return the most popular
-    for (let wordCombo of validWordCombinations) {
+    // grab the top 10 from this sorted list
+    let topTen = sortedByLeastSpaces.slice(0, 10);
 
-        let popularWordScore = 0;
-        for (let word of wordCombo.split(' ')) {
+    // automatically add in any one-word phrases
+    fiveBestVanityNumbers.concat(topTen.filter(str => spaceCount(str) === 0));
 
-            for (let dictionaryWord of top5000EnglishWords) {
+    // sort by the most popular words by frequency used in english language
+    let sortedByMostPopular = topTen.sort((a, b) => getPopularityScore(a) - getPopularityScore(b));
 
-            }
+    // add in up to five total vanity numbers
+    for (let phrase of sortedByMostPopular) {
+        if (fiveBestVanityNumbers.length < 5 && !fiveBestVanityNumbers.includes(phrase)) {
+            fiveBestVanityNumbers.push(phrase);
         }
     }
 
-    // hopefully these two heuristics will give good results
-    return validWordCombinations;
+    return fiveBestVanityNumbers;
+
+    function getPopularityScore(phrase) {
+
+        // the top5000EnglishWords array of words are ordered from most popular to least
+        // the less the index of a particular word, the more commonly used it is
+        let phraseArray = phrase.split(' ');
+        let popularityScore = 0;
+        for (let word of phraseArray) {
+            popularityScore += top5000EnglishWords.indexOf(word);
+        }
+        return popularityScore;
+    }
+
+    function spaceCount(str) {
+        return (str.toString().match(/ /g) || []).length;
+    }
 }
-// getBestVanityNumbers(getValidWordCombinations('7394968'))
 
 // return only as much as desired for the limit, with priority on longer words first
+// todo: add cases for '2' and '4'
+// todo: add cases for last 4 digits only if there are no better options
 function getValidWordCombinations(digitsToUse) {
 
     // split into an array for easy iterating
     const digitsArray = digitsToUse.split('');
     let validWordCombinations = [];
+
+    // call the function to recursively generate all available vanity numbers
+    return getWords(digitsArray, '');
 
     function getWords(digitsArray, previousMatch) {
 
@@ -164,12 +191,9 @@ function getValidWordCombinations(digitsToUse) {
                 getWords(digitsArrayCopy, possibleWord);
             }
         }
+
+        return validWordCombinations;
     }
-
-    // call the function to recursively generate all available vanity numbers
-    getWords(digitsArray, '');
-
-    return validWordCombinations;
 }
 
 function getPossibleWordsFromNumberSet(numberSet, additionalCharLength) {
@@ -184,7 +208,7 @@ function getPossibleWordsFromNumberSet(numberSet, additionalCharLength) {
         let splitWord = word.split('');
 
         // there must be numbers to iterate, and the word cannot be longer than the numberSet plus any additional word length
-        // this allows 1 (800) CALL-BILL to be valid - phones will disregard last 'L'
+        // this allows 1 (800) CALL-BILL to be valid - most phones will disregard last 'L'
         const notTooLarge = numberSet.length > 0 && splitWord.length <= numberSet.length + additionalCharLength;
 
         if (notTooLarge) {
@@ -227,7 +251,7 @@ function getConnectFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
         if (validWordCombinations[i] && i < 3) {
 
             // prepend the digits prefix and push to returned array
-            finalFormattedString += `${numberOrderMap[i]} number: ${formattedDigitsPrefix}${validWordCombinations[i]}, `;
+            finalFormattedString += `${numberOrderMap[i]} number: ${formattedDigitsPrefix}${validWordCombinations[i]}, spelled: ${validWordCombinations[i].split('').join(',')}: `;
         } else {
             break;
         }
