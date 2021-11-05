@@ -50,6 +50,42 @@
           }
         }]
       }
+    },
+    "GenerateVanityNumbersLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "generate-vanity-numbers",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "HelloWorldLambdaRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": "cloud-formation-deployment-files",
+          "S3Key": "generate-vanity-numbers.zip"
+        },
+        "Runtime": "nodejs14.x"
+      }
+    },
+    "ViewVanityNumbersLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "view-saved-vanity-numbers",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "HelloWorldLambdaRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": "cloud-formation-deployment-files",
+          "S3Key": "view-saved-vanity-numbers.zip"
+        },
+        "Runtime": "nodejs14.x"
+      }
     }
   }
 }

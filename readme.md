@@ -67,3 +67,8 @@ https://view-saved-vanity-numbers.s3.amazonaws.com/architecture-diagram.png
 <a target="_blank" href="http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html">
 http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html
 </a>
+
+##### Deployment:
+1. Run the `./deployment/deploy.sh` script to build the lambdas and upload them into the S3 deployment bucket.
+2. Open CloudFormation service and build a stack with `./deployment/cloud-formation-template.json`
+3. ?
