@@ -69,6 +69,15 @@ http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html
 </a>
 
 ##### Deployment:
-1. Run the `./deployment/deploy.sh` script to build the lambdas and upload them into the S3 deployment bucket.
-2. Open CloudFormation service and build a stack with `./deployment/cloud-formation-template.json`
-3. ?
+
+Must have `aws-cli` installed with configured credentials and node `v14.XX`.
+
+Run `./deployment/deploy.sh` to locally generate a .zip file of the lambda, and then execute creation of the cloud-formation stack. 
+
+Resources for the Lambda, Amazon Connect instance and contact-flow, and the DynamoDB table will be created with associated roles. 
+If you wish to set up the web app, manually deploy the `view-saved-vanity-numbers` lambda, expose an API Gateway endpoint, 
+set up static web-hosting in your S3 bucket of choice, and upload the `./s3/index.html` file there. Add the api-url to the axios get function.
+The `./s3/deploy.sh` script can be used as a template to deploy updates to the file once the environment is set up.  
+
+Service-specific updates in the lambdas can be updated with the `deploy-update.sh` script. Make sure to replace my environment-specific
+variables with your own. 

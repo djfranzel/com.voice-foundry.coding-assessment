@@ -1,0 +1,133 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "VanityNumbersTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "cloud-foundry_coding-assessment_vanity-numbers",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
+        ],
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "numberType",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "_timeStamp",
+            "AttributeType": "S"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": "5",
+          "WriteCapacityUnits": "5"
+        },
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "numberType-_timeStamp-index",
+            "KeySchema": [
+              {
+                "AttributeName": "numberType",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "_timeStamp",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": "5",
+              "WriteCapacityUnits": "5"
+            }
+          }
+        ]
+      }
+    },
+    "GenerateVanityNumbersLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "generate-vanity-numbers",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "DynamoDBLambdaRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": "franzel-cf-lambdas",
+          "S3Key": "generate-vanity-numbers.zip"
+        },
+        "Runtime": "nodejs14.x"
+      }
+    },
+    "DynamoDBLambdaRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "PutDynamoDBAccessForLambda",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "AWSLambdaBasicExecutionRole",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "arn:aws:logs:us-east-1:622611388168:log-group:/aws/lambda/generate-vanity-numbers:*"
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "DynamoDBPutAccess",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": [
+                    "dynamodb:PutItem"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "arn:aws:dynamodb:us-east-1:622611388168:table/cloud-foundry_coding-assessment_vanity-numbers"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "ConnectInstance": {}
+  }
+}

@@ -64,6 +64,7 @@
         methods: {
             getVanityNumbers: function () {
                 this.loading = true;
+                this.vanityNumbers = [];
                 axios.get('https://8ujcb8zmak.execute-api.us-east-1.amazonaws.com/default/view-saved-vanity-numbers')
                     .then(response => {
                         if (response.data && response.data.length) {
