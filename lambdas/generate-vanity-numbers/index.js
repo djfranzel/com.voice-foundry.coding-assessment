@@ -1,9 +1,11 @@
 const postToDynamoDB = require('./services/postToDynamoDB');
 const top5000EnglishWords = require('./top-5000-english-words');
 const letterMap = {
-    '2': ['a', 'b', 'c'],
+    '0': ['0'],
+    '1': ['1'],
+    '2': ['a', 'b', 'c', '2'],
     '3': ['d', 'e', 'f'],
-    '4': ['g', 'h', 'i'],
+    '4': ['g', 'h', 'i', '4'],
     '5': ['j', 'k', 'l'],
     '6': ['m', 'n', 'o'],
     '7': ['p', 'q', 'r', 's'],
@@ -99,7 +101,7 @@ exports.handler = async (event) => {
     };
 };
 
-// console.log(getBestVanityNumbers(getValidWordCombinations('3283280')))
+// console.log(getBestVanityNumbers(getValidWordCombinations('4333552')))
 
 function getBestVanityNumbers(validWordCombinations) {
 
@@ -145,7 +147,6 @@ function getBestVanityNumbers(validWordCombinations) {
 }
 
 // return only as much as desired for the limit, with priority on longer words first
-// todo: add cases for '2' and '4'
 // todo: add cases for last 4 digits only if there are no better options
 function getValidWordCombinations(digitsToUse) {
 
@@ -158,21 +159,7 @@ function getValidWordCombinations(digitsToUse) {
 
     function getWords(digitsArray, previousMatch) {
 
-        // create a copy since we are checking each word and recursively looping through all data
-        // failing to create a copy would mutate the original, causing future matches to be missed
-        let digitsArrayCopy = JSON.parse(JSON.stringify(digitsArray));
-
-        // check for '1' or '0' as the first char of the array,
-        if (digitsArrayCopy[0] === '1' || digitsArrayCopy[0] === '0') {
-            previousMatch += ` ${digitsArrayCopy[0]}`;
-            digitsArrayCopy.splice(0, 1);
-            if (previousMatch.replace(/ /g, '').length >= 7) {
-                validWordCombinations.push(previousMatch.trim());
-            }
-            getWords(digitsArrayCopy, previousMatch);
-        }
-
-        let wordList = getPossibleWordsFromNumberSet(digitsArray, 2);
+        let wordList = getPossibleWordsFromNumberSet(digitsArray, 1);
 
         for (let i = 0; i < wordList.length; i++) {
 
@@ -184,6 +171,7 @@ function getValidWordCombinations(digitsToUse) {
                 validWordCombinations.push(possibleWord.trim());
             } else if (effectiveLength < 7) {
 
+                // failing to create a copy would mutate the original, causing future matches to be missed
                 // remove however many chars from the digitsArrayCopy that the word is long
                 let digitsArrayCopy = JSON.parse(JSON.stringify(digitsArray));
                 digitsArrayCopy.splice(0, wordList[i].length);
