@@ -6,7 +6,7 @@
 
     Retrieving the best 5 vanity numbers was a challenge. I thought of a number of solutions for this, including 
     implementing a grammar API that phrases could be passed and good grammar comes back with some type of rating. 
-    However, this might eliminate certain desirable results with duplicate words or with local grammatically-incorrect lingo. 
+    But, this might eliminate certain desirable results with duplicate words or with local grammatically-incorrect lingo. 
     I chose to set the word-pool to the top 5000 used english words, prioritized results toward the longest words,
     and created a popularity score of the phrase by getting the position in the most popular 5000 english words,
     which was sorted by most common to least common. Any one-word vanity numbers were automatically added.
@@ -14,8 +14,8 @@
     To improve these results, I'd be inclined to save all items to a DB and let a user parse through the results. 
     Most phone numbers didn't produce more than a few dozen results; some produced none. 
     
-    The architecture of the project was more or less set from the requirements, and those were the best choices given 
-    the requirements. I implemented the web-app independently, and hosted it as a static web-app in S3.
+    I am familiar with AWS, so setting up the resources wasn't too much of a problem, but it took some googling to 
+    implement the CloudFormation deployment solution. 
 
 2. What shortcuts did you take that would be a bad practice in production?
 
@@ -23,28 +23,30 @@
     would need to be behind authentication in production. I'd want to dive deeper into Amazon Connect since this was 
     my first time using this specific service. My solution works when calling the number, but there may be more architecture
     that would make this a more secure solution that I'm unaware of. There is not a great deal of automated testing, 
-    but I did include several lambda tests in the `./test'` folder. 
+    but I did include several lambda tests in the `./test'` folder. Running these commands simulates a call request, 
+    and results are stored in the DynamoDB table and a response.json file locally. I would come up with a more comprehensive
+    deployment solution in production so that an engineer could easily deploy all the necessary code with just a few clicks.
+    Most of the code - Lambda, DynamoDB table, roles, are deployed with Cloud Formation, but this solution could be more 
+    comprehensive. 
    
 3. What would you have done with more time? We know you have a life. :-)
 
-    On the vanity number generation, we could also include cases for '2' and '4' since they correlate to 'to' and 'for', 
-    which would create more possibilities. We could also only generate vanity numbers for the last four digits if 
-    nothing better could be found. Adding these two would create a more comprehensive solution. The top 5000 english word list
-    was good, but we could consider other word sources, potentially expanding, and potentially removing more 'sensitive' words.
+    On the vanity number generation, we could also generate vanity numbers for the last four digits only. The top 5000 english word list
+    was good, but we could consider other word sources, potentially expanding, and potentially removing some words.
     We could also test this more broadly, review with the client to create improvements, such as saving all 
     vanity numbers in a DB and having those available for a human to parse them. Some of the code could be refactored further,
     but I had a lot of fun with it, so it is fairly condensed given what it is doing. I'm sure that a client would have suggestions 
     and after a few iterations and conversations, we'd be able to add functionality to have a great product delivered. 
     
     I did not have time to implement the Custom Resource. I understand they are useful for automating a deployment  
-    when Cloud Formation doesn't natively support the service. Instead, I created a `contact-flow.json` export that contains 
-    all the configuration for the contact flow, including the lambda arn. You can simply upload that .json into your contact flow, 
-    and the functionality is there. 
+    when Cloud Formation doesn't natively support the service. Instead, I created a `./deployment/contact-flow.json` export that contains 
+    all the configuration for the contact flow, including a place for the lambda arn. An engineer can simply upload that .json into a contact flow, 
+    and the full functionality is there. 
 
 4. What other considerations would you make before making our toy app into something that would be ready for high volumes of traffic, potential attacks from bad folks, etc.
 
     There are probably some scaling and security considerations in Amazon Connect that I'm not currently aware of. I'd certainly
-    implement security for the web-app viewer and API Gateway endpoint. I might set alarms and monitoring of all the resources being used, perhaps
+    implement security for the web-app viewer and API Gateway endpoint. I might set alarms and monitoring of all the resources being used, and
     tag them for consolidated billing insights. I'd want to dive deeper into Connect to learn of more security requirements,
     as I'm sure there could be more done than my bare-bones implementation. We could also build the web-app with a full 
     environment and load-balance requests across regions for minimizing latency. 
@@ -56,8 +58,8 @@
     from the connect request and returned a spoken-friendly response of the top three results. 
     The top 5 results were saved into a DynamoDB table that was implemented with an index to get sorted results of most 
     recent 5 results for the web-app. The web-app was a simple S3 static website with Bootstrap, axios, moment, and vue.js to 
-    create a simple table (link above). Data was retrieved through exposing a lambda function that queried DynamoDB through API Gateway. 
-   
+    create a simple table. Data was retrieved through exposing a lambda function that queried DynamoDB through API Gateway. 
+    Architecture diagram is linked below. 
 <br>
 
 ##### Architecture diagram:
@@ -75,17 +77,19 @@ http://view-saved-vanity-numbers.s3-website-us-east-1.amazonaws.com/index.html
 
 ##### Deployment:
 
-Must have `aws-cli` installed with configured credentials and node `v14.XX`.
+Must have `aws-cli` v2 installed with configured credentials and node `v14.XX`. 
 
-Run `./deployment/deploy.sh` to locally generate a .zip file of the lambda, and then execute creation of the cloud-formation stack. 
+`./deployment/deploy.sh`
+Replace variables at the top of the file with your own and run the script from the project root. This generates a .zip
+of the lambda, uploads it to an S3 bucket, and then executes a CloudFormation template that creates the lambda, table, and
+associated roles in a stack. 
 
-Resources for the Lambda and DynamoDB table will be created with associated roles via Cloud Formation. I did not have enough time to create a Custom Resource
-for the contact flow setup. Instead, I exported the contact flow to `./deployment/contact-flow.json`. A user can add this to 
-their Amazon Connect instance. I started the `aws-cli` commands for importing the contact flow programmatically as well, 
-but this method lacks the lifecycle features of Cloud Formation (CREATE, UPDATE, DELETE). 
-If you wish to set up the web-app, deploy the `view-saved-vanity-numbers` lambda, expose an API Gateway endpoint, 
-set up static web-hosting in your S3 bucket of choice, and upload the `./s3/index.html` file there. Add the api-url to the axios get function.
-The `./s3/deploy.sh` script can be used as a template to deploy updates to the file once the environment is set up.  
+A user will have to add the `./deployment/contact-flow.json` to their own Connect instance. The commands for associating 
+the lambda function and adding the contact flow to the Connect instance are started. 
 
-Service-specific updates in the lambdas can be updated with the `deploy-update.sh` script. Make sure to replace my environment-specific
-variables with your own. 
+The web-app code exists in `./s3/` with an update script. A user can create an S3 bucket with static web hosting enabled, 
+deploy the `./lambdas/view-saved-vanity-numbers` lambda, expose that lambda via API Gateway, add the endpoint in the `./s3/index.html`
+and deploy. This could be fully automated as well. 
+
+More could be done to fully automate this deployment with CloudFormation. It is possible with Custom Resources and
+more time spent configuring the instance, but the main parts are there given the time. Let me know if you have any questions. 

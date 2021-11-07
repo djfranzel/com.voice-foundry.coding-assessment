@@ -146,7 +146,7 @@ function getBestVanityNumbers(validWordCombinations) {
     }
 }
 
-// return only as much as desired for the limit, with priority on longer words first
+// recursively generates all possible vanity numbers for the number set
 // todo: add cases for last 4 digits only if there are no better options
 function getValidWordCombinations(digitsToUse) {
 
@@ -231,7 +231,7 @@ function getConnectFormattedVanityNumbers(digitsPrefix, validWordCombinations) {
 
     // format the prefix with separated numbers so voice will speak them slower and more clearly
     let formattedDigitsPrefix =
-        `${digitsPrefix[0]}, ${digitsPrefix[1]} ${digitsPrefix[2]} ${digitsPrefix[3]},`;
+        `${digitsPrefix[0]}, ${digitsPrefix[1]} ${digitsPrefix[2]} ${digitsPrefix[3]}, `;
 
     // iterate over all validWordCombinations to the limit of 3
     let finalFormattedString = '';
