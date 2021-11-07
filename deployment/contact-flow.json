@@ -1,0 +1,205 @@
+{
+  "modules": [
+    {
+      "id": "ebe6f29d-7384-441f-b9f6-f65d3859a447",
+      "type": "PlayPrompt",
+      "branches": [
+        {
+          "condition": "Success",
+          "transition": "9edd663e-fbf4-4d24-9a83-743b980b86c8"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "Text",
+          "value": "Welcome to vanity number generator. Attempting to generate 3 vanity numbers from your phone number.",
+          "namespace": null
+        },
+        {
+          "name": "TextToSpeechType",
+          "value": "text"
+        }
+      ],
+      "metadata": {
+        "position": {
+          "x": 204,
+          "y": 177
+        },
+        "useDynamic": false
+      }
+    },
+    {
+      "id": "4a3263e1-b87d-4007-8881-717c330206c4",
+      "type": "PlayPrompt",
+      "branches": [
+        {
+          "condition": "Success",
+          "transition": "f2363fd2-29b9-4125-b6e5-a84338350aa6"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "Text",
+          "value": "$.External.PreSpeech $.External.MainResponse",
+          "namespace": null
+        },
+        {
+          "name": "TextToSpeechType",
+          "value": "text"
+        }
+      ],
+      "metadata": {
+        "position": {
+          "x": 798,
+          "y": 92
+        },
+        "useDynamic": false
+      }
+    },
+    {
+      "id": "f2363fd2-29b9-4125-b6e5-a84338350aa6",
+      "type": "PlayPrompt",
+      "branches": [
+        {
+          "condition": "Success",
+          "transition": "a45d7e0f-363b-48d0-ae63-fb44bfe65850"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "Text",
+          "value": "Thank you for using our service. Good-bye.",
+          "namespace": null
+        },
+        {
+          "name": "TextToSpeechType",
+          "value": "text"
+        }
+      ],
+      "metadata": {
+        "position": {
+          "x": 1120,
+          "y": 96
+        },
+        "useDynamic": false
+      }
+    },
+    {
+      "id": "a45d7e0f-363b-48d0-ae63-fb44bfe65850",
+      "type": "Disconnect",
+      "branches": [],
+      "parameters": [],
+      "metadata": {
+        "position": {
+          "x": 1429,
+          "y": 231
+        }
+      }
+    },
+    {
+      "id": "21bb9395-4234-4d47-84b7-b08a2d5c0806",
+      "type": "PlayPrompt",
+      "branches": [
+        {
+          "condition": "Success",
+          "transition": "a45d7e0f-363b-48d0-ae63-fb44bfe65850"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "Text",
+          "value": "Good-bye.",
+          "namespace": null
+        },
+        {
+          "name": "TextToSpeechType",
+          "value": "text"
+        }
+      ],
+      "metadata": {
+        "position": {
+          "x": 1135,
+          "y": 301
+        },
+        "useDynamic": false
+      }
+    },
+    {
+      "id": "9edd663e-fbf4-4d24-9a83-743b980b86c8",
+      "type": "InvokeExternalResource",
+      "branches": [
+        {
+          "condition": "Success",
+          "transition": "4a3263e1-b87d-4007-8881-717c330206c4"
+        },
+        {
+          "condition": "Error",
+          "transition": "e5f02bad-1e74-48f6-b83d-0c409bf672f2"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "FunctionArn",
+          "value": "arn:aws:lambda:us-east-1:622611388168:function:generate-vanity-numbers",
+          "namespace": null
+        },
+        {
+          "name": "TimeLimit",
+          "value": "3"
+        }
+      ],
+      "metadata": {
+        "position": {
+          "x": 460,
+          "y": 162
+        },
+        "dynamicMetadata": {},
+        "useDynamic": false
+      },
+      "target": "Lambda"
+    },
+    {
+      "id": "e5f02bad-1e74-48f6-b83d-0c409bf672f2",
+      "type": "PlayPrompt",
+      "branches": [
+        {
+          "condition": "Success",
+          "transition": "21bb9395-4234-4d47-84b7-b08a2d5c0806"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "Text",
+          "value": "Internal server error. Please contact an administrator.",
+          "namespace": null
+        },
+        {
+          "name": "TextToSpeechType",
+          "value": "text"
+        }
+      ],
+      "metadata": {
+        "position": {
+          "x": 729,
+          "y": 313
+        },
+        "useDynamic": false
+      }
+    }
+  ],
+  "version": "1",
+  "start": "ebe6f29d-7384-441f-b9f6-f65d3859a447",
+  "metadata": {
+    "entryPointPosition": {
+      "x": 27,
+      "y": 182
+    },
+    "snapToGrid": false,
+    "name": "Get Vanity Numbers",
+    "description": null,
+    "type": "contactFlow",
+    "status": "published",
+    "hash": "cbedef632189bd24b447580247fe12483b144c37d5e61ca8a0abc75c3c450c49"
+  },
+  "type": "contactFlow"
+}

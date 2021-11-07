@@ -35,6 +35,11 @@
     vanity numbers in a DB and having those available for a human to parse them. Some of the code could be refactored further,
     but I had a lot of fun with it, so it is fairly condensed given what it is doing. I'm sure that a client would have suggestions 
     and after a few iterations and conversations, we'd be able to add functionality to have a great product delivered. 
+    
+    I did not have time to implement the Custom Resource. I understand they are useful for automating a deployment  
+    when Cloud Formation doesn't natively support the service. Instead, I created a `contact-flow.json` export that contains 
+    all the configuration for the contact flow, including the lambda arn. You can simply upload that .json into your contact flow, 
+    and the functionality is there. 
 
 4. What other considerations would you make before making our toy app into something that would be ready for high volumes of traffic, potential attacks from bad folks, etc.
 
@@ -74,8 +79,11 @@ Must have `aws-cli` installed with configured credentials and node `v14.XX`.
 
 Run `./deployment/deploy.sh` to locally generate a .zip file of the lambda, and then execute creation of the cloud-formation stack. 
 
-Resources for the Lambda, Amazon Connect instance and contact-flow, and the DynamoDB table will be created with associated roles. 
-If you wish to set up the web app, manually deploy the `view-saved-vanity-numbers` lambda, expose an API Gateway endpoint, 
+Resources for the Lambda and DynamoDB table will be created with associated roles via Cloud Formation. I did not have enough time to create a Custom Resource
+for the contact flow setup. Instead, I exported the contact flow to `./deployment/contact-flow.json`. A user can add this to 
+their Amazon Connect instance. I started the `aws-cli` commands for importing the contact flow programmatically as well, 
+but this method lacks the lifecycle features of Cloud Formation (CREATE, UPDATE, DELETE). 
+If you wish to set up the web-app, deploy the `view-saved-vanity-numbers` lambda, expose an API Gateway endpoint, 
 set up static web-hosting in your S3 bucket of choice, and upload the `./s3/index.html` file there. Add the api-url to the axios get function.
 The `./s3/deploy.sh` script can be used as a template to deploy updates to the file once the environment is set up.  
 
